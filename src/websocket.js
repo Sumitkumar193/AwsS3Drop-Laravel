@@ -1,35 +1,33 @@
 import { WebSocketServer } from 'ws';
-import SHA256 from "crypto-js/sha256.js";
+import {Animals} from './animals.js';
 
 export default function WebSocket(server) {
     const Clients = new Map();
     const wss = new WebSocketServer({ server });
     wss.on("connection", (ws, req) => {
-        const id = uuidv4();
-        const color = Math.floor(Math.random() * 360);
-        const metadata = { id, color };
-
-        const uniqueId = SHA256(JSON.stringify(metadata)).toString();
+        const uniqueId = uuidv4();
 
         Clients.set(uniqueId, ws);
-        // console.log(`Connected Client ${uniqueId}`);
-        console.log('Total Clients : ', Clients.size);
-
+        console.log(`Connected Client ${uniqueId}`);
 
         ws.on("close", () => {
-            // clients.delete(uniqueId);
+            Clients.delete(uniqueId);
             console.log(`Disconnected Client ${uniqueId}`);
         });
 
-        ws.on('message', function incoming(message) {
+        ws.on('message', function incoming(data) {
+            const { type, payload } = JSON.parse(data);
 
-            const { id, payload } = JSON.parse(message);
-
-            const client = Clients.get(id);
-
-            if (client && client.readyState === 1) {
-                client.send(JSON.stringify(payload));
-            }
+            wss.clients.forEach(function each(client) {
+                if (client.readyState === 1 && client !== ws) {
+                    const message = {
+                        "from" : uniqueId,
+                        "type": type,
+                        "payload": payload
+                    }
+                    client.send(JSON.stringify(message));
+                }
+            });
         });
 
         ws.on("error", (ws, error) => {
@@ -39,7 +37,8 @@ export default function WebSocket(server) {
     });
 
     function uuidv4() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const randomAnimal = Animals[Math.floor(Math.random() * Animals.length)];
+        return `Anonymous-${randomAnimal}-Zxxx-xxxxxxCxxxxx`.replace(/[x]/g, function (c) {
             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
