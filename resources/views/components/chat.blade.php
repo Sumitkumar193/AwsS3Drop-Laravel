@@ -75,14 +75,15 @@
         }
         wss.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            console.log(data);
+            console.log(data)
             messages.push(data);
-            chat.append(`<div class="d-flex flex-row justify-content-start mb-4">
-                                ${data.sender === 'me' ? me : you}
+            chat.append(`<div class="d-flex flex-row ${data.from === 'me' ? 'justify-content-end pt-1' : 'justify-content-start'} mb-4">
+                                ${data.from === 'me' ? '' : you}
                                 <div>
-                                    <p class="small p-2 ms-3 mb-1 rounded-3" style="background-color: #f5f6f7;">${data.message}</p>
-                                    <p class="small ms-3 mb-3 rounded-3 text-muted">${data.time}</p>
+                                    <p class="small p-2 ms-3 mb-1 rounded-3" style="background-color: #f5f6f7;">${data.payload}</p>
+                                    <p class="small ms-3 mb-3 rounded-3 text-muted">${data.from} (${data.time})</p>
                                 </div>
+                                ${data.from === 'me' ? me : ''}
                             </div>`);
             chat.scrollTop(chat.prop('scrollHeight'));
         }
@@ -91,8 +92,8 @@
             const message = input.val();
             if (message) {
                 wss.send(JSON.stringify({
-                    message,
-                    sender: 'me',
+                    payload: message,
+                    from: 'me',
                     time: new Date().toLocaleTimeString()
                 }));
                 console.log('sent')

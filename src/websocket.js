@@ -16,15 +16,17 @@ export default function WebSocket(server) {
         });
 
         ws.on('message', function incoming(data) {
-            const { type, payload } = JSON.parse(data);
+            const { type, payload, time } = JSON.parse(data);
 
             wss.clients.forEach(function each(client) {
-                if (client.readyState === 1 && client !== ws) {
-                    const message = {
-                        "from" : uniqueId,
-                        "type": type,
-                        "payload": payload
-                    }
+                const message = {
+                    "from" : uniqueId,
+                    "type": type,
+                    "payload": payload,
+                    "time": time
+                }
+                if (client.readyState === 1) {
+                    message.from = client !== ws ? uniqueId : "me";
                     client.send(JSON.stringify(message));
                 }
             });
